@@ -55,17 +55,27 @@ def fetch_rql_file(repo_url):
 def goRQL(token: str) -> Tuple[int, str]:
     scanURL = PC_URL + "/search/config" if PC_URL is not None else exit(1)
     headers = {
-        #    "accept": "application/json; charset=UTF-8",
-        "accept": "text/csv",
+        "accept": "application/json; charset=UTF-8",
+        # "accept": "text/csv",
         "content-type": "application/json",
         "Authorization": f"Bearer {token}",
     }
     query = fetch_rql_file(GIT_REPO_URL)
     print(query)
     queryJSON = {
+        "searchName": "My Search",
+        "searchDescription": "Description of the search",
+        "withResourceJson": True,
+        # "timeRange": {"type": "relative", "value": {"unit": "minute", "amount": 10}},
+        # "sort": [{"field": "ID", "direction": "asc"}],
+        "limit": 10,
+        "ID": "string",
         "query": query,
-        "timeRange": {"type": "relative", "value": {"unit": "hour", "amount": 24}},
     }
+    # queryJSON = {
+    #    "query": query,
+    #    "timeRange": {"type": "relative", "value": {"unit": "hour", "amount": 24}},
+    # }
 
     response = requests.post(
         scanURL, headers=headers, timeout=60, verify=False, json=queryJSON
