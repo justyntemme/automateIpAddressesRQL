@@ -27,7 +27,7 @@ def fetch_rql_file(repo_url):
         repo.git.checkout("main")
 
         # Construct the path to the rql.txt file.
-        rql_file_path = os.path.join(temp_dir, "test-rql.txt")
+        rql_file_path = os.path.join(temp_dir, "rql.txt")
         print(f"Looking for the file at {rql_file_path}...")
 
         if os.path.exists(rql_file_path):
