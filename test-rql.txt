@@ -1,1 +1,1 @@
-config from cloud.resource where cloud.type = 'aws' AND api.name = 'aws-s3api-get-bucket-acl' AND json.rule = acl.grants[*].grantee contains "AuthenticatedUsers"
+config from cloud.resource where cloud.type = 'aws' AND api.name = 'aws-s3api-get-bucket-acl' 
