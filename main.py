@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Tuple, List
+from typing import Tuple
 import git
 import shutil
 import requests
@@ -83,14 +83,13 @@ def goRQL(
     # formatted_cidr_ips = cidr_ips.replace("[", "").replace("]", "")
     # query = fetch_rql_file(GIT_REPO_URL)
     print(cidr_ips)
-    formatted_cidr_ips = cidr_ips.replace("[", "").replace("]", "")
 
     query = (
         f"config from cloud.resource where cloud.account = '{cloud_account}' "
         f"and api.name = 'aws-ec2-describe-security-groups' "
         f"AND json.rule = ipPermissions[*].ipv4Ranges[*].cidrIp exists "
-        f"and ipPermissions[*].ipv4Ranges[?none(cidrIp is member of ({formatted_cidr_ips}))] exists "
-        #        f'and vpcId contains "{vpc_id}" '
+        f"and ipPermissions[*].ipv4Ranges[?none(cidrIp is member of ({cidr_ips}))] exists "
+        f'and vpcId contains "{vpc_id}" '
         #        f"and groupId is member of ("
     )
     queryJSON = {
@@ -156,14 +155,14 @@ def check_param(param):
 
 
 def main():
-    P: Tuple[str, str, str, str, str, str, List[str]] = (
+    P: Tuple[str, str, str, str, str, str, str] = (
         "PC_IDENTITY",
         "PC_SECRET",
         "PC_URL",
         "CLOUD_ACCOUNT",
         "CIDR_IPS",
         "VPC_ID",
-        ["SECURITY_GROUPS"],
+        "SECURITY_GROUPS",
     )
     accessKey, accessSecret, _, cloudAccount, CIDRIPS, vpcId, SECURITY_GROUPS = map(
         check_param, P
