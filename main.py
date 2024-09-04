@@ -70,7 +70,8 @@ def goRQL(
     token: str,
     cloud_account: str,
     cidr_ips: str,
-    vpc_id: str,  # security_groups: str
+    vpc_id: str,
+    security_groups: str,  # security_groups: str
 ) -> Tuple[int, str]:
     scanURL = PC_URL + "/search/config" if PC_URL is not None else exit(1)
     headers = {
@@ -79,16 +80,19 @@ def goRQL(
         "content-type": "application/json",
         "Authorization": f"Bearer {token}",
     }
+    # formatted_cidr_ips = cidr_ips.replace("[", "").replace("]", "")
     # query = fetch_rql_file(GIT_REPO_URL)
+    print(cidr_ips)
+    formatted_cidr_ips = cidr_ips.replace("[", "").replace("]", "")
+
     query = (
         f"config from cloud.resource where cloud.account = '{cloud_account}' "
         f"and api.name = 'aws-ec2-describe-security-groups' "
         f"AND json.rule = ipPermissions[*].ipv4Ranges[*].cidrIp exists "
-        f"and ipPermissions[*].ipv4Ranges[?none(cidrIp is member of ({cidr_ips}))] exists "
-        f'and vpcId contains "{vpc_id}" '
-        # f"and groupId is member of (\"{security_groups.replace(',', '\", \"')}\")"
+        f"and ipPermissions[*].ipv4Ranges[?none(cidrIp is member of ({formatted_cidr_ips}))] exists "
+        #        f'and vpcId contains "{vpc_id}" '
+        #        f"and groupId is member of ("
     )
-    print(query)
     queryJSON = {
         "searchName": "My Search",
         "searchDescription": "Description of the search",
@@ -99,12 +103,6 @@ def goRQL(
         "ID": "string",
         "query": query,
     }
-    print(queryJSON["query"])
-    # queryJSON = {
-    #    "query": query,
-    #    "timeRange": {"type": "relative", "value": {"unit": "hour", "amount": 24}},
-    # }
-
     response = requests.post(
         scanURL, headers=headers, timeout=60, verify=False, json=queryJSON
     )
@@ -158,24 +156,31 @@ def check_param(param):
 
 
 def main():
-    P: Tuple[str, str, str, str, List[str], str] = (
+    P: Tuple[str, str, str, str, str, str, List[str]] = (
         "PC_IDENTITY",
         "PC_SECRET",
         "PC_URL",
         "CLOUD_ACCOUNT",
-        ["CIDR_IPS"],
+        "CIDR_IPS",
         "VPC_ID",
+        ["SECURITY_GROUPS"],
     )
-    accessKey, accessSecret, _ = map(check_param, P)
+    accessKey, accessSecret, _, cloudAccount, CIDRIPS, vpcId, SECURITY_GROUPS = map(
+        check_param, P
+    )
     responseCode, cspmToken = (
         generateCSPMToken(accessKey, accessSecret)
         if accessKey and accessSecret
         else (None, None)
     )
-
-    responseCode, content = goRQL(cspmToken) if cspmToken else (exit(1))
+    responseCode, content = (
+        goRQL(cspmToken, cloudAccount, CIDRIPS, vpcId, SECURITY_GROUPS)
+        if cspmToken
+        else (exit(1))
+    )
     logging.info(responseCode)
     logging.info(content)
+    print(content)
 
 
 if __name__ == "__main__":
