@@ -27,19 +27,19 @@ def fetch_rql_file(repo_url):
         repo.git.checkout("main")
 
         # Construct the path to the rql.txt file.
-        rql_file_path = os.path.join(temp_dir, "rql.txt")
+        rql_file_path = os.path.join(temp_dir, "ips.txt")
         print(f"Looking for the file at {rql_file_path}...")
 
-        if os.path.exists(rql_file_path):
-            with open(rql_file_path, "r") as file:
-                rql_content = file.read()
+        if os.path.exists(ips_file_path):
+            with open(ips_file_path, "r") as file:
+                ips_content = file.read()
                 print("File read successfully.")
         else:
             raise FileNotFoundError(
-                "rql.txt does not exist in the root directory of the repo"
+                "ips.txt does not exist in the root directory of the repo"
             )
 
-        return rql_content
+        return ips_content
 
     except Exception as e:
         print(f"An error occurred: {str(e)}")
@@ -50,20 +50,6 @@ def fetch_rql_file(repo_url):
             print(f"Cleaning up the temporary directory {temp_dir}...")
             shutil.rmtree(temp_dir)
             print("Cleanup successful.")
-
-
-def format_security_groups(security_groups):
-    """
-    Takes an input array of security groups and returns a formatted string in the required format:
-    ( \"sg-123456\", \"sg-123454\")
-    """
-    # Format each element in the array to be enclosed in double quotes and comma-separated
-    formatted_groups = ", ".join(f'"{sg}"' for sg in security_groups)
-
-    # Enclose the formatted string in parentheses
-    formatted_string = f"( {formatted_groups} )"
-
-    return formatted_string
 
 
 def goRQL(
@@ -81,16 +67,15 @@ def goRQL(
         "Authorization": f"Bearer {token}",
     }
     # formatted_cidr_ips = cidr_ips.replace("[", "").replace("]", "")
-    # query = fetch_rql_file(GIT_REPO_URL)
-    print(cidr_ips)
+    ipAddresses = fetch_rql_file(GIT_REPO_URL)
 
     query = (
         f"config from cloud.resource where cloud.account = '{cloud_account}' "
         f"and api.name = 'aws-ec2-describe-security-groups' "
         f"AND json.rule = ipPermissions[*].ipv4Ranges[*].cidrIp exists "
-        f"and ipPermissions[*].ipv4Ranges[?none(cidrIp is member of ({cidr_ips}))] exists "
+        f"and ipPermissions[*].ipv4Ranges[?none(cidrIp is member of ({ipAddresses}))] exists "
         f'and vpcId contains "{vpc_id}" '
-        #        f"and groupId is member of ("
+        f"and groupId is member of ({security_groups})"
     )
     queryJSON = {
         "searchName": "My Search",
