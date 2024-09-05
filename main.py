@@ -33,6 +33,9 @@ def fetchIPRepository(repoUrl):
         if os.path.exists(ipsFilePath):
             with open(ipsFilePath, "r") as file:
                 ipsContent = file.read()
+                # for some reason there is a newline being added to the end of the file. i have no idea why but strippign the newlines seems to fix
+                ipsContent = ipsContent.replace("\n", "")
+                logging.info(f"Raw file content: {repr(ipsContent)}")
                 logging.info("File read successfully.")
         else:
             raise FileNotFoundError(
@@ -55,7 +58,6 @@ def fetchIPRepository(repoUrl):
 def goRQL(
     token: str,
     cloudAccount: str,
-    cidr_ips: str,
     vpcId: str,
     securityGroups: str,  # security_groups: str
 ) -> Tuple[int, str]:
@@ -145,13 +147,10 @@ def main():
         "pcSecret",
         "pcUrl",
         "cloudAccount",
-        "cidrIps",
         "vpcId",
         "securityGroups",
     )
-    accessKey, accessSecret, _, cloudAccount, cidrIps, vpcId, securityGroups = map(
-        checkParam, P
-    )
+    accessKey, accessSecret, _, cloudAccount, vpcId, securityGroups = map(checkParam, P)
 
     responseCode, cspmToken = (
         generateCSPMToken(accessKey, accessSecret)
@@ -159,7 +158,7 @@ def main():
         else (None, None)
     )
     responseCode, content = (
-        goRQL(cspmToken, cloudAccount, cidrIps, vpcId, securityGroups)
+        goRQL(cspmToken, cloudAccount, vpcId, securityGroups)
         if cspmToken
         else (exit(1))
     )
