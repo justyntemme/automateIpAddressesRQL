@@ -67,6 +67,7 @@ def goRQL(
         "Authorization": f"Bearer {token}",
     }
     ipAddresses = fetchIPRepository(gitRepoUrl)
+    logging.info(ipAddresses)
 
     query = (
         f"config from cloud.resource where cloud.account = '{cloudAccount}' "
