@@ -15,7 +15,7 @@ PC_URL = os.environ.get("PC_URL")
 GIT_REPO_URL = "https://github.com/justyntemme/automateIpAddressesRQL"
 
 
-def fetch_rql_file(repo_url):
+def fetchIPRepository(repo_url):
     temp_dir = "temp_repo"
 
     try:
@@ -67,7 +67,7 @@ def goRQL(
         "Authorization": f"Bearer {token}",
     }
     # formatted_cidr_ips = cidr_ips.replace("[", "").replace("]", "")
-    ipAddresses = fetch_rql_file(GIT_REPO_URL)
+    ipAddresses = fetchIPRepository(GIT_REPO_URL)
 
     query = (
         f"config from cloud.resource where cloud.account = '{cloud_account}' "
