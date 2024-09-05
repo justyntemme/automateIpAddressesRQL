@@ -9,29 +9,29 @@ import requests
 logging.basicConfig(level=logging.INFO)
 
 
-# Global Variables
+# Global Variables are snake case to match env variable expected
 n = None  # To shorten line lengths
-PC_URL = os.environ.get("PC_URL")
-GIT_REPO_URL = "https://github.com/justyntemme/automateIpAddressesRQL"
+pcUrl = os.environ.get("pcUrl")
+gitRepoUrl = "https://github.com/justyntemme/automateIpAddressesRQL"
 
 
-def fetchIPRepository(repo_url):
-    temp_dir = "temp_repo"
+def fetchIPRepository(repoUrl):
+    tempDir = "temp_repo"
 
     try:
         # Clone the repository into the temporary directory.
-        print(f"Cloning the repository from {repo_url} into {temp_dir}...")
-        repo = git.Repo.clone_from(repo_url, temp_dir)
+        print(f"Cloning the repository from {repoUrl} into {tempDir}...")
+        repo = git.Repo.clone_from(repoUrl, tempDir)
         print("Repository cloned successfully.")
 
         repo.git.checkout("main")
 
         # Construct the path to the rql.txt file.
-        rql_file_path = os.path.join(temp_dir, "ips.txt")
-        print(f"Looking for the file at {rql_file_path}...")
+        ipsFilePath = os.path.join(tempDir, "ips.txt")
+        print(f"Looking for the file at {ipsFilePath}...")
 
-        if os.path.exists(ips_file_path):
-            with open(ips_file_path, "r") as file:
+        if os.path.exists(ipsFilePath):
+            with open(ipsFilePath, "r") as file:
                 ips_content = file.read()
                 print("File read successfully.")
         else:
@@ -46,36 +46,35 @@ def fetchIPRepository(repo_url):
         return None
 
     finally:
-        if os.path.exists(temp_dir):
-            print(f"Cleaning up the temporary directory {temp_dir}...")
-            shutil.rmtree(temp_dir)
+        if os.path.exists(tempDir):
+            print(f"Cleaning up the temporary directory {tempDir}...")
+            shutil.rmtree(tempDir)
             print("Cleanup successful.")
 
 
 def goRQL(
     token: str,
-    cloud_account: str,
+    cloudAccount: str,
     cidr_ips: str,
-    vpc_id: str,
-    security_groups: str,  # security_groups: str
+    vpcId: str,
+    securityGroups: str,  # security_groups: str
 ) -> Tuple[int, str]:
-    scanURL = PC_URL + "/search/config" if PC_URL is not None else exit(1)
+    scanURL = pcUrl + "/search/config" if pcUrl is not None else exit(1)
     headers = {
         "accept": "application/json; charset=UTF-8",
         # "accept": "text/csv",
         "content-type": "application/json",
         "Authorization": f"Bearer {token}",
     }
-    # formatted_cidr_ips = cidr_ips.replace("[", "").replace("]", "")
-    ipAddresses = fetchIPRepository(GIT_REPO_URL)
+    ipAddresses = fetchIPRepository(gitRepoUrl)
 
     query = (
-        f"config from cloud.resource where cloud.account = '{cloud_account}' "
+        f"config from cloud.resource where cloud.account = '{cloudAccount}' "
         f"and api.name = 'aws-ec2-describe-security-groups' "
         f"AND json.rule = ipPermissions[*].ipv4Ranges[*].cidrIp exists "
         f"and ipPermissions[*].ipv4Ranges[?none(cidrIp is member of ({ipAddresses}))] exists "
-        f'and vpcId contains "{vpc_id}" '
-        f"and groupId is member of ({security_groups})"
+        f'and vpcId contains "{vpcId}" '
+        f"and groupId is member of ({securityGroups})"
     )
     queryJSON = {
         "searchName": "My Search",
@@ -94,7 +93,7 @@ def goRQL(
 
 
 def generateCSPMToken(accessKey: str, accessSecret: str) -> Tuple[int, str]:
-    authURL = PC_URL + "/login"
+    authURL = pcUrl + "/login"
 
     headers = {
         "accept": "application/json; charset=UTF-8",
@@ -117,40 +116,40 @@ def generateCSPMToken(accessKey: str, accessSecret: str) -> Tuple[int, str]:
     return response.status_code, ""
 
 
-def check_param(param):
+def checkParam(param):
     if isinstance(param, str):
         # Single parameter case
-        param_value = os.environ.get(param)
-        if param_value is None:
+        paramValue = os.environ.get(param)
+        if paramValue is None:
             logging.error(f"Missing {param}")
             raise ValueError(f"Missing {param}")
-        return param_value
+        return paramValue
     elif isinstance(param, list):
         # List of parameters case
-        param_values = []
+        paramValues = []
         for p in param:
-            param_value = os.environ.get(p)
-            if param_value is None:
+            paramValue = os.environ.get(p)
+            if paramValue is None:
                 logging.error(f"Missing {p}")
                 raise ValueError(f"Missing {p}")
-            param_values.append(param_value)
-        return param_values
+            paramValues.append(paramValue)
+        return paramValues
     else:
         raise TypeError("Parameter must be a string or a list of strings")
 
 
 def main():
     P: Tuple[str, str, str, str, str, str, str] = (
-        "PC_IDENTITY",
-        "PC_SECRET",
-        "PC_URL",
-        "CLOUD_ACCOUNT",
-        "CIDR_IPS",
-        "VPC_ID",
-        "SECURITY_GROUPS",
+        "pcIdentity",
+        "pcSecret",
+        "pcUrl",
+        "cloudAccount",
+        "cidrIps",
+        "vpcID",
+        "securityGroups",
     )
-    accessKey, accessSecret, _, cloudAccount, CIDRIPS, vpcId, SECURITY_GROUPS = map(
-        check_param, P
+    accessKey, accessSecret, _, cloudAccount, CIDRIPS, vpcId, securityGroups = map(
+        checkParam, P
     )
     responseCode, cspmToken = (
         generateCSPMToken(accessKey, accessSecret)
@@ -158,7 +157,7 @@ def main():
         else (None, None)
     )
     responseCode, content = (
-        goRQL(cspmToken, cloudAccount, CIDRIPS, vpcId, SECURITY_GROUPS)
+        goRQL(cspmToken, cloudAccount, CIDRIPS, vpcId, securityGroups)
         if cspmToken
         else (exit(1))
     )
