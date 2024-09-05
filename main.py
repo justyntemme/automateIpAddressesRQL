@@ -12,7 +12,6 @@ logging.basicConfig(level=logging.INFO)
 # Global Variables are snake case to match env variable expected
 n = None  # To shorten line lengths
 pcUrl = os.environ.get("pcUrl")
-gitRepoUrl = "https://github.com/justyntemme/automateIpAddressesRQL"
 
 
 def fetchIPRepository(repoUrl):
@@ -56,10 +55,7 @@ def fetchIPRepository(repoUrl):
 
 
 def goRQL(
-    token: str,
-    cloudAccount: str,
-    vpcId: str,
-    securityGroups: str,  # security_groups: str
+    token: str, cloudAccount: str, vpcId: str, securityGroups: str, repoUrl: str
 ) -> Tuple[int, str]:
     scanURL = pcUrl + "/search/config" if pcUrl is not None else exit(1)
     headers = {
@@ -68,7 +64,7 @@ def goRQL(
         "content-type": "application/json",
         "Authorization": f"Bearer {token}",
     }
-    ipAddresses = fetchIPRepository(gitRepoUrl)
+    ipAddresses = fetchIPRepository(repoUrl)
     logging.info(ipAddresses)
 
     query = (
@@ -149,8 +145,11 @@ def main():
         "cloudAccount",
         "vpcId",
         "securityGroups",
+        "gitUrl",
     )
-    accessKey, accessSecret, _, cloudAccount, vpcId, securityGroups = map(checkParam, P)
+    accessKey, accessSecret, _, cloudAccount, vpcId, securityGroups, gitUrl = map(
+        checkParam, P
+    )
 
     responseCode, cspmToken = (
         generateCSPMToken(accessKey, accessSecret)
@@ -158,7 +157,7 @@ def main():
         else (None, None)
     )
     responseCode, content = (
-        goRQL(cspmToken, cloudAccount, vpcId, securityGroups)
+        goRQL(cspmToken, cloudAccount, vpcId, securityGroups, gitUrl)
         if cspmToken
         else (exit(1))
     )
