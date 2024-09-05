@@ -16,40 +16,40 @@ gitRepoUrl = "https://github.com/justyntemme/automateIpAddressesRQL"
 
 
 def fetchIPRepository(repoUrl):
-    tempDir = "temp_repo"
+    tempDir = "tempRepo"
 
     try:
         # Clone the repository into the temporary directory.
-        print(f"Cloning the repository from {repoUrl} into {tempDir}...")
+        logging.info(f"Cloning the repository from {repoUrl} into {tempDir}...")
         repo = git.Repo.clone_from(repoUrl, tempDir)
-        print("Repository cloned successfully.")
+        logging.info("Repository cloned successfully.")
 
         repo.git.checkout("main")
 
         # Construct the path to the rql.txt file.
         ipsFilePath = os.path.join(tempDir, "ips.txt")
-        print(f"Looking for the file at {ipsFilePath}...")
+        logging.info(f"Looking for the file at {ipsFilePath}...")
 
         if os.path.exists(ipsFilePath):
             with open(ipsFilePath, "r") as file:
-                ips_content = file.read()
-                print("File read successfully.")
+                ipsContent = file.read()
+                logging.info("File read successfully.")
         else:
             raise FileNotFoundError(
                 "ips.txt does not exist in the root directory of the repo"
             )
-
-        return ips_content
+        logging.info(ipsContent)
+        return ipsContent
 
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        logging.error(f"An error occurred: {str(e)}")
         return None
 
     finally:
         if os.path.exists(tempDir):
-            print(f"Cleaning up the temporary directory {tempDir}...")
+            logging.info(f"Cleaning up the temporary directory {tempDir}...")
             shutil.rmtree(tempDir)
-            print("Cleanup successful.")
+            logging.info("Cleanup successful.")
 
 
 def goRQL(
@@ -145,25 +145,25 @@ def main():
         "pcUrl",
         "cloudAccount",
         "cidrIps",
-        "vpcID",
+        "vpcId",
         "securityGroups",
     )
-    accessKey, accessSecret, _, cloudAccount, CIDRIPS, vpcId, securityGroups = map(
+    accessKey, accessSecret, _, cloudAccount, cidrIps, vpcId, securityGroups = map(
         checkParam, P
     )
+
     responseCode, cspmToken = (
         generateCSPMToken(accessKey, accessSecret)
         if accessKey and accessSecret
         else (None, None)
     )
     responseCode, content = (
-        goRQL(cspmToken, cloudAccount, CIDRIPS, vpcId, securityGroups)
+        goRQL(cspmToken, cloudAccount, cidrIps, vpcId, securityGroups)
         if cspmToken
         else (exit(1))
     )
     logging.info(responseCode)
     logging.info(content)
-    print(content)
 
 
 if __name__ == "__main__":
